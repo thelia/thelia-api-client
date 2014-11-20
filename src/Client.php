@@ -78,7 +78,7 @@ class Client
      * @param array $options
      * @return \Guzzle\Http\EntityBodyInterface|Response|mixed|string
      */
-    public function sendList($name, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doList($name, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         return $this->call(
             "GET",
@@ -90,7 +90,7 @@ class Client
         );
     }
 
-    public function sendGet($name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doGet($name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         return $this->call(
             "GET",
@@ -102,7 +102,7 @@ class Client
         );
     }
 
-    public function sendPost($name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doPost($name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         if (is_array($body)) {
             $body = json_encode($body);
@@ -123,7 +123,7 @@ class Client
         );
     }
 
-    public function sendPut($name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doPut($name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         if (is_array($body)) {
             $body = json_encode($body);
@@ -148,7 +148,7 @@ class Client
         );
     }
 
-    public function sendDelete($name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doDelete($name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         return $this->call(
             "DELETE",
