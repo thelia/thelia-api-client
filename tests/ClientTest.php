@@ -72,5 +72,57 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertArrayHasKey('LOCALE', $data[0]);
         $this->assertEquals("en_US", $data[0]['LOCALE']);
     }
+
+    public function testConvertsSnakeCaseToCamelCase()
+    {
+        $this->assertEquals(
+            "helloWorld",
+            Client::snakeToCamelCase("hello_world")
+        );
+
+        $this->assertEquals(
+            "thisIsALongSentence",
+            Client::snakeToCamelCase("this_is_a_long_sentence")
+        );
+    }
+
+    public function testConvertsSnakeCaseToPascalCase()
+    {
+        $this->assertEquals(
+            "HelloWorld",
+            Client::snakeToPascalCase("hello_world")
+        );
+
+        $this->assertEquals(
+            "ThisIsALongSentence",
+            Client::snakeToPascalCase("this_is_a_long_sentence")
+        );
+    }
+
+    public function testConvertsCamelCaseToSnakeCase()
+    {
+        $this->assertEquals(
+            "hello_world",
+            Client::camelToSnakeCase("helloWorld")
+        );
+
+        $this->assertEquals(
+            "this_is_a_long_sentence",
+            Client::camelToSnakeCase("thisIsALongSentence")
+        );
+    }
+
+    public function testConvertsPascalCaseToSnakeCase()
+    {
+        $this->assertEquals(
+            "hello_world",
+            Client::pascalToSnakeCase("HelloWorld")
+        );
+
+        $this->assertEquals(
+            "this_is_a_long_sentence",
+            Client::pascalToSnakeCase("ThisIsALongSentence")
+        );
+    }
 }
  

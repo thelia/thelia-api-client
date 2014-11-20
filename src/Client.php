@@ -342,5 +342,43 @@ class Client
 
         return hash_hmac('sha1', $requestContent, $secureKey);
     }
+
+    public static function snakeToCamelCase($value)
+    {
+        return preg_replace_callback(
+            "/_([a-z])/i",
+            function($match) {
+                return strtoupper($match[1]);
+            },
+            $value
+        );
+    }
+
+    public static function snakeToPascalCase($value)
+    {
+        return ucfirst(static::snakeToCamelCase($value));
+    }
+
+    public static function camelToSnakeCase($value)
+    {
+        return preg_replace_callback(
+            "/([A-Z])/",
+            function($match) {
+                return '_' . strtolower($match[1]);
+            },
+            $value
+        );
+    }
+
+    public static function pascalToSnakeCase($value)
+    {
+        if (strlen($value) === 0) {
+            return $value;
+        }
+
+        $value = strtolower($value[0]) . substr($value, 1);
+
+        return static::camelToSnakeCase($value);
+    }
 }
  
