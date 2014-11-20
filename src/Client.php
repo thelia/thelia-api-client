@@ -303,6 +303,10 @@ class Client
             $string .= '&';
         }
 
+        if ($string === '') {
+            return $string;
+        }
+
         return substr($string, 0, -1);
     }
 
