@@ -1,6 +1,6 @@
 {
     "name": "thelia/api-client",
-    "description": "Guzzle base client for Thelia API",
+    "description": "Guzzle based client for Thelia API",
     "require": {
         "guzzle/guzzle": "~3.9"
     },
