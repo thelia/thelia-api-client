@@ -38,7 +38,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
     public function testClientReturnsAnArrayOnGetAction()
     {
-        list($status, $data) = $this->client->sendList("products");
+        list($status, $data) = $this->client->doList("products");
 
         $this->assertEquals(200, $status);
 
@@ -51,7 +51,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         /**
          * Test one locale
          */
-        list($status, $data) = $this->client->sendList("products", ["lang" => 'fr_FR']);
+        list($status, $data) = $this->client->doList("products", ["lang" => 'fr_FR']);
 
         $this->assertEquals(200, $status);
 
@@ -63,7 +63,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         /**
          * Test another
          */
-        list($status, $data) = $this->client->sendList("products", ["lang" => 'en_US']);
+        list($status, $data) = $this->client->doList("products", ["lang" => 'en_US']);
 
         $this->assertEquals(200, $status);
 
@@ -123,6 +123,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             "this_is_a_long_sentence",
             Client::pascalToSnakeCase("ThisIsALongSentence")
         );
+    }
+
+    public function testAcceptMagicCalls()
+    {
+        $expected = $this->client->doList("products", ["lang" => 'fr_FR']);
+        $current = $this->client->listProducts(["lang" => "fr_FR"]);
+
+        $this->assertEquals($expected, $current);
+
+        $expected = $this->client->doGet("products", 1);
+        $current = $this->client->getProducts(1);
+
+        $this->assertEquals($expected, $current);
     }
 }
  

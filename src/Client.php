@@ -25,6 +25,14 @@ use Guzzle\Http\Message\Response;
  */
 class Client
 {
+    protected static $knownMethods = array(
+        "LIST",
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+    );
+
     /**
      * @var string
      */
@@ -342,6 +350,42 @@ class Client
 
         return hash_hmac('sha1', $requestContent, $secureKey);
     }
+
+
+    // Magic calls
+    public function __call($name, $arguments)
+    {
+        $callable = null;
+
+        if (method_exists($this, $name)) {
+            $callable = [$this, $name];
+        }
+
+        foreach (static::$knownMethods as $method) {
+            if (0 === strpos($name, strtolower($method)) && strlen($name) > $methodLen = strlen($method)) {
+                $entity = static::pascalToSnakeCase(substr($name, $methodLen));
+
+                $methodName = 'do'.ucfirst(strtolower($method));
+
+                if (method_exists($this, $methodName)) {
+                    $callable = [$this, $methodName];
+                }
+
+                array_unshift($arguments, $entity);
+                break;
+            }
+        }
+
+        if (null !== $callable) {
+            return call_user_func_array($callable, $arguments);
+        }
+
+        throw new \BadMethodCallException(
+            sprintf("The method %s::%s doesn't exist", __CLASS__, $name)
+        );
+    }
+
+    // Formatting tools
 
     public static function snakeToCamelCase($value)
     {
