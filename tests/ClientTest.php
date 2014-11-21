@@ -87,12 +87,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             "helloWorld",
-            Client::snakeToCamelCase("hello_world")
+            Client::snakeToCamelCase("hello-world")
         );
 
         $this->assertEquals(
             "thisIsALongSentence",
-            Client::snakeToCamelCase("this_is_a_long_sentence")
+            Client::snakeToCamelCase("this-is-a-long-sentence")
         );
     }
 
@@ -100,24 +100,24 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertEquals(
             "HelloWorld",
-            Client::snakeToPascalCase("hello_world")
+            Client::snakeToPascalCase("hello-world")
         );
 
         $this->assertEquals(
             "ThisIsALongSentence",
-            Client::snakeToPascalCase("this_is_a_long_sentence")
+            Client::snakeToPascalCase("this-is-a-long-sentence")
         );
     }
 
     public function testConvertsCamelCaseToSnakeCase()
     {
         $this->assertEquals(
-            "hello_world",
+            "hello-world",
             Client::camelToSnakeCase("helloWorld")
         );
 
         $this->assertEquals(
-            "this_is_a_long_sentence",
+            "this-is-a-long-sentence",
             Client::camelToSnakeCase("thisIsALongSentence")
         );
     }
@@ -125,12 +125,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testConvertsPascalCaseToSnakeCase()
     {
         $this->assertEquals(
-            "hello_world",
+            "hello-world",
             Client::pascalToSnakeCase("HelloWorld")
         );
 
         $this->assertEquals(
-            "this_is_a_long_sentence",
+            "this-is-a-long-sentence",
             Client::pascalToSnakeCase("ThisIsALongSentence")
         );
     }
@@ -146,6 +146,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $current = $this->client->getProducts(1);
 
         $this->assertEquals($expected, $current);
+    }
+
+    public function testCanCallCamelizedDashOnMagicCall()
+    {
+        list($status, $data) = $this->client->listAttributeAvs();
+
+        $this->assertEquals(200, $status);
     }
 }
  

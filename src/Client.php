@@ -14,7 +14,6 @@ namespace Thelia\Api\Client;
 
 use Guzzle\Http\Client as BaseClient;
 use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Message\RequestInterface;
 use Guzzle\Http\Message\Response;
 
@@ -25,6 +24,8 @@ use Guzzle\Http\Message\Response;
  */
 class Client
 {
+    public static $snakeSeparator = '-';
+
     protected static $knownMethods = array(
         "LIST",
         "GET",
@@ -397,8 +398,10 @@ class Client
 
     public static function snakeToCamelCase($value)
     {
+        $separator = static::$snakeSeparator;
+
         return preg_replace_callback(
-            "/_([a-z])/i",
+            "/\\{$separator}([a-z])/i",
             function($match) {
                 return strtoupper($match[1]);
             },
@@ -416,7 +419,7 @@ class Client
         return preg_replace_callback(
             "/([A-Z])/",
             function($match) {
-                return '_' . strtolower($match[1]);
+                return static::$snakeSeparator . strtolower($match[1]);
             },
             $value
         );
