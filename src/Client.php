@@ -199,13 +199,21 @@ class Client
     {
         $request = $this->prepareRequest($method, $fullUrl, $query, $body, $headers, $options);
 
-        $response = $request->send();
+        try {
+            $response = $request->send();
+        } catch (\Exception $e) {
+            $response = $request->getResponse();
+        }
+
+        if (null === $response) {
+            throw new NoResponseException;
+        }
 
         if (isset($options["handle_response"]) && false === $options["handle_response"]) {
             return $response;
         }
 
-        return $this->handleResponse($request, $request->send());
+        return $this->handleResponse($request, $response);
     }
 
 
@@ -216,10 +224,6 @@ class Client
      */
     public function handleResponse(RequestInterface $request, Response $response)
     {
-        if (!$response->isSuccessful()) {
-            throw BadResponseException::factory($request, $response);
-        }
-
         $body = $response->getBody(true);
 
         switch ($response->getContentType()) {

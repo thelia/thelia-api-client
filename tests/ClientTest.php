@@ -73,6 +73,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("en_US", $data[0]['LOCALE']);
     }
 
+    public function testDoesNotThrowExceptionOnError()
+    {
+        list($status, $data) = $this->client->doGet("products", PHP_INT_MAX);
+
+        $this->assertEquals(404, $status);
+        $this->assertTrue(is_array($data));
+
+        $this->assertArrayHasKey("error", $data);
+    }
+
     public function testConvertsSnakeCaseToCamelCase()
     {
         $this->assertEquals(
