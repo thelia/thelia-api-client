@@ -73,6 +73,64 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("en_US", $data[0]['LOCALE']);
     }
 
+    public function testRetrievesArrayFromUrlParameters()
+    {
+        $params = "var1=foo&var2=bar&foo";
+
+        $this->assertEquals(
+            [
+                "var1" => "foo",
+                "var2" => "bar",
+                "foo" => '',
+            ],
+            $this->client->retrieveArrayFromUrlParameters($params)
+        );
+    }
+
+    public function testRetrievesArrayFromUrlParametersEvenWithWeirdCombinations()
+    {
+        $params = "&var1=foo&&var2=bar&foo&";
+
+        $this->assertEquals(
+            [
+                "var1" => "foo",
+                "var2" => "bar",
+                "foo" => '',
+            ],
+            $this->client->retrieveArrayFromUrlParameters($params)
+        );
+    }
+
+    public function testTransformsArrayToUrlParameterString()
+    {
+        $params = array(
+            "var1" => "foo",
+            "var2" => "bar",
+            "foo" => '',
+        );
+
+        $this->assertEquals(
+            "var1=foo&var2=bar&foo",
+            $this->client->retrieveUrlParametersFromArray($params)
+        );
+    }
+
+    public function testTransformsArrayToUrlParameterStringEventWithWeirdArray()
+    {
+        $params = array(
+            "var1" => "foo",
+            "var2" => "bar",
+            "foo" => '',
+            "bar" => "baz",
+            "baz" => null,
+        );
+
+        $this->assertEquals(
+            "var1=foo&var2=bar&foo&bar=baz&baz",
+            $this->client->retrieveUrlParametersFromArray($params)
+        );
+    }
+
     public function testDoesNotThrowExceptionOnError()
     {
         list($status, $data) = $this->client->doGet("products", PHP_INT_MAX);

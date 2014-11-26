@@ -329,14 +329,16 @@ class Client
         $toggle = false;
 
         for ($i = 0; $i < $len; ++$i) {
-            if ($strParams[$i] == '&' && $key !== '') {
-                // Store current var
-                $table[$key] = $value;
+            if ($strParams[$i] == '&') {
+                if ($key !== '') {
+                    // Store current var
+                    $table[$key] = $value;
 
-                // Re-init values
-                $key = '';
-                $value = '';
-                $toggle = false;
+                    // Re-init values
+                    $key = '';
+                    $value = '';
+                    $toggle = false;
+                }
             } elseif ($strParams[$i] == '=') {
                 $toggle = true;
             } elseif ($toggle) {
@@ -344,6 +346,11 @@ class Client
             } else {
                 $key .= $strParams[$i];
             }
+        }
+
+        // Collect the last
+        if (!empty($key)) {
+            $table[$key] = $value;
         }
 
         return $table;
