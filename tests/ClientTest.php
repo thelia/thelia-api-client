@@ -11,6 +11,7 @@
 /*************************************************************************************/
 
 namespace Thelia\Api\Client\Tests;
+
 use Thelia\Api\Client\Client;
 
 /**
