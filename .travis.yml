@@ -1,0 +1,22 @@
+language: php
+
+php:
+    - 5.4
+    - 5.5
+    - 5.6
+
+before_script:
+    - composer self-update
+    - composer install --dev
+    - sh -c "mysql -uroot -e 'SET FOREIGN_KEY_CHECKS = 0; DROP DATABASE IF EXISTS thelia;SET FOREIGN_KEY_CHECKS = 1;'; fi"
+    - cd ..
+    - composer create-project thelia/thelia thelia 2.1.0-alpha2
+    - cd thelia
+    - phpenv config-add travis.php.ini
+    - php Thelia thelia:install --db_host=localhost --db_username=root --db_name=thelia
+    - php setup/faker.php
+    - php -S localhost:8000 -t web/ >/dev/null 2>&1 &
+    - sleep 3
+    - cd ../thelia-api-client
+
+script: phpunit
