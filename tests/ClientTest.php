@@ -32,7 +32,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         $this->client = new Client(
             "79E95BD784CADA0C9A578282E",
-            "B45B9F244866F77E53255D6C0E0B60A2FA295CB0CFE25",
+            file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "79E95BD784CADA0C9A578282E.key"),
             $this->baseUrl = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "server.txt")
         );
     }
