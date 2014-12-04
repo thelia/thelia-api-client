@@ -49,3 +49,4 @@ list($status, $data) = $client->deleteAttributeAvs(42);
 Tests
 ---
 To run the tests, edit the file tests/server.txt and place your thelia address
+Then run ```setup/faker.php``` on your thelia and copy the file ```local/config/key/79E95BD784CADA0C9A578282E.key``` into the ```thelia-api-client/tests```

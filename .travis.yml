@@ -17,6 +17,7 @@ before_script:
     - php setup/faker.php
     - php -S localhost:8000 -t web/ >/dev/null 2>&1 &
     - sleep 3
+    - cp local/config/key/79E95BD784CADA0C9A578282E.key ../thelia-api-client/tests
     - cd ../thelia-api-client
 
 script: phpunit
