@@ -12,10 +12,12 @@
 
 namespace Thelia\Api\Client;
 
-use Guzzle\Http\Client as BaseClient;
-use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use GuzzleHttp\Client as BaseClient;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Psr7\RequestInterface;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Request;
+
 
 /**
  * Class Client
@@ -132,6 +134,28 @@ class Client
         );
     }
 
+    public function doUpload($name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
+    {
+        if (is_array($body)) {
+            $body = json_encode($body);
+        }
+
+
+        return $this->call(
+            "POST",
+            $this->baseApiRoute . $name,
+            $loopArgs,
+            $body,
+            array_merge(
+                [
+                    "Content-Type" => "application/json"
+                ],
+                $headers
+            ),
+            $options
+        );
+    }
+
     public function doPut($name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         if (is_array($body)) {
@@ -201,9 +225,10 @@ class Client
         $request = $this->prepareRequest($method, $fullUrl, $query, $body, $headers, $options);
 
         try {
-            $response = $request->send();
+            $response = $this->client->send($request);
         } catch (\Exception $e) {
-            $response = $request->getResponse();
+
+            $response = $e->getmessage();
         }
 
         if (null === $response) {
@@ -223,14 +248,15 @@ class Client
      * @param Response $response
      * @return \Guzzle\Http\EntityBodyInterface|mixed|string
      */
-    public function handleResponse(RequestInterface $request, Response $response)
-    {
+    public function handleResponse(Request $request, Response $response)
+    {   
         $body = $response->getBody(true);
-
-        switch ($response->getContentType()) {
+        $contentType = $response->getHeader('Content-Type')[0];
+        switch ($contentType) {
             case "application/json":
                 $body = json_decode($body, true);
                 break;
+           
         }
 
         return [$response->getStatusCode(), $body];
@@ -252,14 +278,14 @@ class Client
 
         $fullUrl = $this->formatUrl($fullUrl, $query);
 
-        $request = $this->client->createRequest(
+        $request = new Request(
             $method,
             $fullUrl,
             $headers,
             $body,
             $options
         );
-
+      
         return $request;
     }
 
