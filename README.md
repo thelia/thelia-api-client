@@ -33,6 +33,20 @@ list($status, $data) = $client->doGet("products/1/image", 1);
 list($status, $data) = $client->doPost("products", ["myData"]);
 list($status, $data) = $client->doPut("products", ["myData"]);
 list($status, $data) = $client->doDelete("products", 1);
+list($status, $data) = $client->doPost("products/1/images", [],[],
+	[
+    'multipart' => [
+        [
+            'name'     => 'image1',
+            'contents' => fopen('/path/to/image', 'r')
+        ],
+        [
+            'name'     => 'image2',
+            'contents' => fopen('/path/to/image', 'r')
+        ],
+      ]
+    ]
+);
 ```
 
 Or you can use magic methods that are composed like that: ```methodEntity```

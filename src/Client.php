@@ -134,27 +134,7 @@ class Client
         );
     }
 
-    public function doUpload($name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
-    {
-        if (is_array($body)) {
-            $body = json_encode($body);
-        }
-
-
-        return $this->call(
-            "POST",
-            $this->baseApiRoute . $name,
-            $loopArgs,
-            $body,
-            array_merge(
-                [
-                    "Content-Type" => "application/json"
-                ],
-                $headers
-            ),
-            $options
-        );
-    }
+    
 
     public function doPut($name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
@@ -227,8 +207,9 @@ class Client
         try {
             $response = $this->client->send($request);
         } catch (\Exception $e) {
-
+            
             $response = $e->getmessage();
+            throw new \Exception($response);
         }
 
         if (null === $response) {
@@ -278,7 +259,7 @@ class Client
 
         $fullUrl = $this->formatUrl($fullUrl, $query);
 
-        $request = new Request(
+        @$request = new Request(
             $method,
             $fullUrl,
             $headers,
