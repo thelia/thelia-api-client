@@ -10,7 +10,7 @@
         {
             "name": "Franck Allimant",
             "email": "fallimant@openstudio.fr"
-        },
+        }
     ],
     "require": {
         "php": ">=8.1",
