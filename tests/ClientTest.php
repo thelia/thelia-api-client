@@ -12,6 +12,8 @@
 
 namespace Thelia\Api\Client\Tests;
 
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\Dotenv\Dotenv;
 use Thelia\Api\Client\Client;
 
 /**
@@ -19,21 +21,21 @@ use Thelia\Api\Client\Client;
  * @package Thelia\Api\Client\Tests
  * @author Benjamin Perche <bperche@openstudio.fr>
  */
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends TestCase
 {
     /**
      * @var Client
      */
     protected $client;
 
-    protected $baseUrl;
-
-    public function setUp()
+    public function setUp(): void
     {
+        (new Dotenv())->loadEnv(dirname(__DIR__).'/.env');
+
         $this->client = new Client(
-            "79E95BD784CADA0C9A578282E",
-            "B45B9F244866F77E53255D6C0E0B60A2FA295CB0CFE25",
-            $this->baseUrl = file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . "server.txt")
+            $_ENV['API_KEY'],
+            $_ENV['API_TOKEN'],
+            $_ENV['API_BASE_URL']
         );
     }
 
@@ -43,7 +45,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(200, $status);
 
-        $this->assertTrue(is_array($data));
+        $this->assertIsArray($data);
         $this->assertGreaterThan(0, count($data));
     }
 
@@ -56,7 +58,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(200, $status);
 
-        $this->assertTrue(is_array($data));
+        $this->assertIsArray($data);
         $this->assertGreaterThan(0, count($data));
         $this->assertArrayHasKey('LOCALE', $data[0]);
         $this->assertEquals("fr_FR", $data[0]['LOCALE']);
@@ -68,7 +70,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals(200, $status);
 
-        $this->assertTrue(is_array($data));
+        $this->assertIsArray($data);
         $this->assertGreaterThan(0, count($data));
         $this->assertArrayHasKey('LOCALE', $data[0]);
         $this->assertEquals("en_US", $data[0]['LOCALE']);
@@ -137,7 +139,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         list($status, $data) = $this->client->doGet("products", PHP_INT_MAX);
 
         $this->assertEquals(404, $status);
-        $this->assertTrue(is_array($data));
+        $this->assertIsArray($data);
 
         $this->assertArrayHasKey("error", $data);
     }
@@ -214,4 +216,4 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(200, $status);
     }
 }
- 
+

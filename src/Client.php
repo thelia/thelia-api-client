@@ -12,10 +12,9 @@
 
 namespace Thelia\Api\Client;
 
-use Guzzle\Http\Client as BaseClient;
-use Guzzle\Http\ClientInterface;
-use Guzzle\Http\Message\RequestInterface;
-use Guzzle\Http\Message\Response;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * Class Client
@@ -24,9 +23,9 @@ use Guzzle\Http\Message\Response;
  */
 class Client
 {
-    public static $snakeSeparator = '-';
+    public static string $snakeSeparator = '-';
 
-    protected static $knownMethods = array(
+    protected static array $knownMethods = array(
         "LIST",
         "GET",
         "POST",
@@ -34,39 +33,20 @@ class Client
         "DELETE"
     );
 
-    /**
-     * @var string
-     */
-    protected $apiToken;
+    protected string $apiToken;
+    protected string $apiKey;
+    protected string $baseUrl;
+    protected HttpClientInterface $client;
+    protected string $baseApiRoute;
 
     /**
-     * @var string
-     */
-    protected $apiKey;
-
-    /**
-     * @var string
-     */
-    protected $baseUrl;
-
-    /**
-     * @var ClientInterface
-     */
-    protected $client;
-
-    /**
-     * @var string
-     */
-    protected $baseApiRoute;
-
-    /**
-     * @param $apiToken
-     * @param $apiKey
+     * @param string $apiToken
+     * @param string $apiKey
      * @param string $baseUrl
-     * @param ClientInterface $client
+     * @param HttpClientInterface|null $client
      * @param string $baseApiRoute
      */
-    public function __construct($apiToken, $apiKey, $baseUrl = '', ClientInterface $client = null, $baseApiRoute = '/api/')
+    public function __construct(string $apiToken, string $apiKey, string $baseUrl = '', HttpClientInterface $client = null, string $baseApiRoute = '/api/')
     {
         $this->apiToken = $apiToken;
 
@@ -74,20 +54,20 @@ class Client
 
         $this->baseUrl = $baseUrl;
 
-        $this->client = $client ?: new BaseClient();
+        $this->client = $client ?: HttpClient::create();
 
         $this->baseApiRoute = $baseApiRoute;
     }
 
     // Api Actions
     /**
-     * @param $name
+     * @param string $name
      * @param array $loopArgs
      * @param array $headers
      * @param array $options
-     * @return \Guzzle\Http\EntityBodyInterface|Response|mixed|string
+     * @return array|\Guzzle\Http\EntityBodyInterface|mixed|string
      */
-    public function doList($name, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doList(string $name, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         return $this->call(
             "GET",
@@ -99,7 +79,7 @@ class Client
         );
     }
 
-    public function doGet($name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doGet(string $name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         return $this->call(
             "GET",
@@ -111,10 +91,10 @@ class Client
         );
     }
 
-    public function doPost($name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doPost(string $name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         if (is_array($body)) {
-            $body = json_encode($body);
+            $body = json_encode($body, JSON_THROW_ON_ERROR);
         }
 
         return $this->call(
@@ -132,10 +112,10 @@ class Client
         );
     }
 
-    public function doPut($name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doPut(string $name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         if (is_array($body)) {
-            $body = json_encode($body);
+            $body = json_encode($body, JSON_THROW_ON_ERROR);
         }
 
         if (null !== $id && '' !== $id) {
@@ -157,7 +137,7 @@ class Client
         );
     }
 
-    public function doDelete($name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doDelete(string $name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
     {
         return $this->call(
             "DELETE",
@@ -178,9 +158,8 @@ class Client
      * @param string $body
      * @param array $headers
      * @param array $options
-     * @return \Guzzle\Http\EntityBodyInterface|Response|mixed|string
      */
-    public function call($method, $pathInfo, array $queryParameters = array(), $body = '', array $headers = array(),  array $options = array())
+    public function call(string $method, string $pathInfo, array $queryParameters = array(), string $body = '', array $headers = array(),  array $options = array())
     {
         $url = $this->baseUrl . $pathInfo;
 
@@ -188,52 +167,54 @@ class Client
     }
 
     /**
-     * @param $method
-     * @param $fullUrl
+     * @param string $method
+     * @param string $fullUrl
      * @param array $query
      * @param string $body
      * @param array $headers
      * @param array $options
-     * @return \Guzzle\Http\EntityBodyInterface|Response|mixed|string
+     * @return array|ResponseInterface|void
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
-    public function callUrl($method, $fullUrl, array $query = array(), $body = '', array $headers = array(),  array $options = array())
+    public function callUrl(string $method, string $fullUrl, array $query = array(), string $body = '', array $headers = array(),  array $options = array())
     {
-        $request = $this->prepareRequest($method, $fullUrl, $query, $body, $headers, $options);
+        $response = $this->prepareRequest($method, $fullUrl, $query, $body, $headers, $options);
 
-        try {
-            $response = $request->send();
-        } catch (\Exception $e) {
-            $response = $request->getResponse();
-        }
-
-        if (null === $response) {
-            throw new NoResponseException;
-        }
-
-        if (isset($options["handle_response"]) && false === $options["handle_response"]) {
+        if ($options["handle_response"] ?? false) {
             return $response;
         }
 
-        return $this->handleResponse($request, $response);
+        return $this->handleResponse($response);
     }
 
 
     /**
-     * @param RequestInterface $request
-     * @param Response $response
-     * @return \Guzzle\Http\EntityBodyInterface|mixed|string
+     * @param ResponseInterface $response
+     * @return array
+     * @throws \JsonException
+     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
      */
-    public function handleResponse(RequestInterface $request, Response $response)
+    public function handleResponse(ResponseInterface $response): array
     {
-        $body = $response->getBody(true);
+        try {
+            $body = $response->getContent(true);
 
-        switch ($response->getContentType()) {
-            case "application/json":
-                $body = json_decode($body, true);
-                break;
+            switch ($response->getHeaders()['content-type'][0]) {
+                case "application/json":
+                    $body = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+                    break;
+            }
+        } catch (\Exception $ex) {
+            $body = [ 'error' => $ex->getMessage() ];
         }
 
-        return [$response->getStatusCode(), $body];
+        return [$response->getStatusCode(), $body ];
     }
 
     /**
@@ -243,24 +224,26 @@ class Client
      * @param string $body
      * @param array $headers
      * @param array $options
-     * @return RequestInterface
+     * @return ResponseInterface
      */
-    public function prepareRequest($method, $fullUrl, array $query = array(), $body = '', array $headers = array(), array $options = array())
+    public function prepareRequest($method, $fullUrl, array $query = array(), string $body = '', array $headers = array(), array $options = array()): ResponseInterface
     {
+        $requestOptions = array_merge([
+            'body' => $body,
+            'headers' => [
+                "Authorization" => "TOKEN " . $this->apiToken
+            ]
+        ], $options);
+
         $query["sign"] = $this->getSignature($body);
-        $headers["Authorization"] = "TOKEN " . $this->apiToken;
 
         $fullUrl = $this->formatUrl($fullUrl, $query);
 
-        $request = $this->client->createRequest(
+        return $this->client->request(
             $method,
             $fullUrl,
-            $headers,
-            $body,
-            $options
+            $requestOptions
         );
-
-        return $request;
     }
 
     /**
@@ -268,10 +251,10 @@ class Client
      * @param array $params
      * @return string
      */
-    protected function formatUrl($url, array $params)
+    protected function formatUrl($url, array $params): string
     {
-        if (false !== strpos($url, '?')) {
-            list($url, $values) = explode('?', $url, 1);
+        if (str_contains($url, '?')) {
+            [$url, $values] = explode('?', $url, 1);
 
             $params = array_merge(
                 $this->retrieveArrayFromUrlParameters($values),
@@ -294,7 +277,7 @@ class Client
      * @param array $params
      * @return string
      */
-    public function retrieveUrlParametersFromArray(array $params)
+    public function retrieveUrlParametersFromArray(array $params): string
     {
         $string = '';
 
@@ -319,7 +302,7 @@ class Client
      * @param $strParams
      * @return array
      */
-    public function retrieveArrayFromUrlParameters($strParams)
+    public function retrieveArrayFromUrlParameters($strParams): array
     {
         $table = array();
 
@@ -329,7 +312,7 @@ class Client
         $toggle = false;
 
         for ($i = 0; $i < $len; ++$i) {
-            if ($strParams[$i] == '&') {
+            if ($strParams[$i] === '&') {
                 if ($key !== '') {
                     // Store current var
                     $table[$key] = $value;
@@ -339,7 +322,7 @@ class Client
                     $value = '';
                     $toggle = false;
                 }
-            } elseif ($strParams[$i] == '=') {
+            } elseif ($strParams[$i] === '=') {
                 $toggle = true;
             } elseif ($toggle) {
                 $value .= $strParams[$i];
@@ -360,7 +343,7 @@ class Client
      * @param string $requestContent
      * @return string
      */
-    protected function getSignature($requestContent = '')
+    protected function getSignature(string $requestContent = ''): string
     {
         $secureKey = pack('H*', $this->apiKey);
 
@@ -369,7 +352,7 @@ class Client
 
 
     // Magic calls
-    public function __call($name, $arguments)
+    public function __call(string $name, $arguments)
     {
         $callable = null;
 
@@ -378,7 +361,7 @@ class Client
         }
 
         foreach (static::$knownMethods as $method) {
-            if (0 === strpos($name, strtolower($method)) && strlen($name) > $methodLen = strlen($method)) {
+            if (str_starts_with($name, strtolower($method)) && strlen($name) > $methodLen = strlen($method)) {
                 $entity = static::pascalToSnakeCase(substr($name, $methodLen));
 
                 $methodName = 'do'.ucfirst(strtolower($method));
@@ -403,38 +386,38 @@ class Client
 
     // Formatting tools
 
-    public static function snakeToCamelCase($value)
+    public static function snakeToCamelCase($value): array|string|null
     {
         $separator = static::$snakeSeparator;
 
         return preg_replace_callback(
             "/\\{$separator}([a-z])/i",
-            function($match) {
+            static function($match) {
                 return strtoupper($match[1]);
             },
             $value
         );
     }
 
-    public static function snakeToPascalCase($value)
+    public static function snakeToPascalCase(string $value): string
     {
         return ucfirst(static::snakeToCamelCase($value));
     }
 
-    public static function camelToSnakeCase($value)
+    public static function camelToSnakeCase(string $value): string
     {
         return preg_replace_callback(
             "/([A-Z])/",
-            function($match) {
+            static function($match) {
                 return static::$snakeSeparator . strtolower($match[1]);
             },
             $value
         );
     }
 
-    public static function pascalToSnakeCase($value)
+    public static function pascalToSnakeCase(string $value): string
     {
-        if (strlen($value) === 0) {
+        if ($value === '') {
             return $value;
         }
 
@@ -443,4 +426,3 @@ class Client
         return static::camelToSnakeCase($value);
     }
 }
- 
