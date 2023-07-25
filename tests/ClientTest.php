@@ -14,6 +14,7 @@ namespace Thelia\Api\Client\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\HttpClient\Exception\ClientException;
 use Thelia\Api\Client\Client;
 
 /**
@@ -142,6 +143,22 @@ class ClientTest extends TestCase
         $this->assertIsArray($data);
 
         $this->assertArrayHasKey("error", $data);
+    }
+
+    public function testDoesThrowExceptionOnError()
+    {
+        $this->expectException(ClientException::class);
+
+        $client = new Client(
+            $_ENV['API_KEY'],
+            $_ENV['API_TOKEN'],
+            $_ENV['API_BASE_URL'],
+            null,
+            '/api/',
+            true
+        );
+
+        $client->doGet("products", PHP_INT_MAX);
     }
 
     public function testConvertsSnakeCaseToCamelCase()

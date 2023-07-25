@@ -12,7 +12,14 @@
 
 namespace Thelia\Api\Client;
 
+use BadMethodCallException as BadMethodCallExceptionAlias;
+use Exception as ExceptionAlias;
+use JsonException as JsonExceptionAlias;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -33,41 +40,42 @@ class Client
         "DELETE"
     );
 
-    protected string $apiToken;
-    protected string $apiKey;
-    protected string $baseUrl;
-    protected HttpClientInterface $client;
-    protected string $baseApiRoute;
-
     /**
      * @param string $apiToken
      * @param string $apiKey
      * @param string $baseUrl
      * @param HttpClientInterface|null $client
      * @param string $baseApiRoute
+     * @param bool $throwExceptions
      */
-    public function __construct(string $apiToken, string $apiKey, string $baseUrl = '', HttpClientInterface $client = null, string $baseApiRoute = '/api/')
-    {
-        $this->apiToken = $apiToken;
-
-        $this->apiKey = ($apiKey);
-
-        $this->baseUrl = $baseUrl;
-
-        $this->client = $client ?: HttpClient::create();
-
-        $this->baseApiRoute = $baseApiRoute;
+    public function __construct(
+        protected string $apiToken,
+        protected string $apiKey,
+        protected string $baseUrl = '',
+        protected ?HttpClientInterface $client = null,
+        protected string $baseApiRoute = '/api/',
+        protected bool $throwExceptions = false
+    ) {
+        if (null === $client) {
+            $this->client = HttpClient::create();
+        }
     }
 
     // Api Actions
+
     /**
      * @param string $name
      * @param array $loopArgs
      * @param array $headers
      * @param array $options
-     * @return array|\Guzzle\Http\EntityBodyInterface|mixed|string
+     * @return array|ResponseInterface|null
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     * @throws JsonExceptionAlias
      */
-    public function doList(string $name, array $loopArgs = array(), array $headers = array(), array $options = array())
+    public function doList(string $name, array $loopArgs = array(), array $headers = array(), array $options = array()): array|ResponseInterface|null
     {
         return $this->call(
             "GET",
@@ -79,7 +87,20 @@ class Client
         );
     }
 
-    public function doGet(string $name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
+    /**
+     * @param string $name
+     * @param $id
+     * @param array $loopArgs
+     * @param array $headers
+     * @param array $options
+     * @return array|ResponseInterface
+     * @throws ClientExceptionInterface
+     * @throws JsonExceptionAlias
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     */
+    public function doGet(string $name, $id, array $loopArgs = array(), array $headers = array(), array $options = array()): array|ResponseInterface
     {
         return $this->call(
             "GET",
@@ -91,7 +112,20 @@ class Client
         );
     }
 
-    public function doPost(string $name, $body, array $loopArgs = array(), array $headers = array(), array $options = array())
+    /**
+     * @param string $name
+     * @param $body
+     * @param array $loopArgs
+     * @param array $headers
+     * @param array $options
+     * @return array|ResponseInterface
+     * @throws ClientExceptionInterface
+     * @throws JsonExceptionAlias
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     */
+    public function doPost(string $name, $body, array $loopArgs = array(), array $headers = array(), array $options = array()): array|ResponseInterface
     {
         if (is_array($body)) {
             $body = json_encode($body, JSON_THROW_ON_ERROR);
@@ -112,7 +146,21 @@ class Client
         );
     }
 
-    public function doPut(string $name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array())
+    /**
+     * @param string $name
+     * @param $body
+     * @param $id
+     * @param array $loopArgs
+     * @param array $headers
+     * @param array $options
+     * @return array|ResponseInterface
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     * @throws JsonExceptionAlias
+     */
+    public function doPut(string $name, $body, $id = null, array $loopArgs = array(), array $headers = array(), array $options = array()): array|ResponseInterface
     {
         if (is_array($body)) {
             $body = json_encode($body, JSON_THROW_ON_ERROR);
@@ -137,7 +185,20 @@ class Client
         );
     }
 
-    public function doDelete(string $name, $id, array $loopArgs = array(), array $headers = array(), array $options = array())
+    /**
+     * @param string $name
+     * @param $id
+     * @param array $loopArgs
+     * @param array $headers
+     * @param array $options
+     * @return array|ResponseInterface
+     * @throws ClientExceptionInterface
+     * @throws JsonExceptionAlias
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     */
+    public function doDelete(string $name, $id, array $loopArgs = array(), array $headers = array(), array $options = array()): array|ResponseInterface
     {
         return $this->call(
             "DELETE",
@@ -152,14 +213,20 @@ class Client
     // Client Routines
 
     /**
-     * @param $method
-     * @param $pathInfo
+     * @param string $method
+     * @param string $pathInfo
      * @param array $queryParameters
      * @param string $body
      * @param array $headers
      * @param array $options
+     * @return array|ResponseInterface
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
+     * @throws JsonExceptionAlias
      */
-    public function call(string $method, string $pathInfo, array $queryParameters = array(), string $body = '', array $headers = array(),  array $options = array())
+    public function call(string $method, string $pathInfo, array $queryParameters = array(), string $body = '', array $headers = array(),  array $options = array()): array|ResponseInterface
     {
         $url = $this->baseUrl . $pathInfo;
 
@@ -173,13 +240,14 @@ class Client
      * @param string $body
      * @param array $headers
      * @param array $options
-     * @return array|ResponseInterface|void
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @return array|ResponseInterface
+     * @throws JsonExceptionAlias
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
      */
-    public function callUrl(string $method, string $fullUrl, array $query = array(), string $body = '', array $headers = array(),  array $options = array())
+    public function callUrl(string $method, string $fullUrl, array $query = array(), string $body = '', array $headers = array(),  array $options = array()): array|ResponseInterface
     {
         $response = $this->prepareRequest($method, $fullUrl, $query, $body, $headers, $options);
 
@@ -190,27 +258,28 @@ class Client
         return $this->handleResponse($response);
     }
 
-
     /**
      * @param ResponseInterface $response
      * @return array
-     * @throws \JsonException
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws JsonExceptionAlias
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
      */
     public function handleResponse(ResponseInterface $response): array
     {
         try {
-            $body = $response->getContent(true);
+            $body = $response->getContent();
 
-            switch ($response->getHeaders()['content-type'][0]) {
-                case "application/json":
-                    $body = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-                    break;
+            if ($response->getHeaders()['content-type'][0]) {
+                $body = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
             }
-        } catch (\Exception $ex) {
+        } catch (ExceptionAlias $ex) {
+            if ($this->throwExceptions) {
+                throw $ex;
+            }
+
             $body = [ 'error' => $ex->getMessage() ];
         }
 
@@ -225,14 +294,16 @@ class Client
      * @param array $headers
      * @param array $options
      * @return ResponseInterface
+     * @throws TransportExceptionInterface
      */
     public function prepareRequest($method, $fullUrl, array $query = array(), string $body = '', array $headers = array(), array $options = array()): ResponseInterface
     {
         $requestOptions = array_merge([
             'body' => $body,
-            'headers' => [
-                "Authorization" => "TOKEN " . $this->apiToken
-            ]
+            'headers' => array_merge(
+                [ "Authorization" => "TOKEN " . $this->apiToken ],
+                $headers
+            )
         ], $options);
 
         $query["sign"] = $this->getSignature($body);
@@ -379,7 +450,7 @@ class Client
             return call_user_func_array($callable, $arguments);
         }
 
-        throw new \BadMethodCallException(
+        throw new BadMethodCallExceptionAlias(
             sprintf("The method %s::%s doesn't exist", __CLASS__, $name)
         );
     }
